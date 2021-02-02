@@ -26,7 +26,7 @@ func NewAuthenticator() (*Authenticator, error) {
 		ClientSecret: "YoEyXYMjjXf82CjoAYzOaNqJwFyDz5162kqBSuSI9kzqAEPwcBkjFM31s_JAZ8JG",
 		RedirectURL:  "http://localhost:8080/login/callback",
 		Endpoint:     provider.Endpoint(),
-		Scopes:       []string{oidc.ScopeOpenID, "profile"},
+		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
 	}
 
 	return &Authenticator{

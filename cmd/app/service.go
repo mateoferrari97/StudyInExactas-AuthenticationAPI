@@ -116,6 +116,7 @@ func googleClaimsParser(idToken *oidc.IDToken) (customClaims, error) {
 		Iss     string `json:"iss"`
 		Locale  string `json:"locale"`
 		Name    string `json:"name"`
+		Email   string `json:"email"`
 		Picture string `json:"picture"`
 		Sub     string `json:"sub"`
 	}
@@ -129,7 +130,7 @@ func googleClaimsParser(idToken *oidc.IDToken) (customClaims, error) {
 	return customClaims{
 		Metadata: metaData{
 			Name:            googleClaims.Name,
-			Email:           "", // TODO
+			Email:           googleClaims.Email,
 			AvatarURL:       googleClaims.Picture,
 			OAuthProvider:   subject[0],
 			OAuthProviderID: subject[1],
@@ -151,6 +152,7 @@ func windowsClaimsParser(idToken *oidc.IDToken) (customClaims, error) {
 		Iat     int64  `json:"iat"`
 		Iss     string `json:"iss"`
 		Name    string `json:"name"`
+		Email   string `json:"email"`
 		Picture string `json:"picture"`
 		Sub     string `json:"sub"`
 	}
@@ -164,7 +166,7 @@ func windowsClaimsParser(idToken *oidc.IDToken) (customClaims, error) {
 	return customClaims{
 		Metadata: metaData{
 			Name:            windowsClaims.Name,
-			Email:           "", // TODO
+			Email:           windowsClaims.Email,
 			AvatarURL:       windowsClaims.Picture,
 			OAuthProvider:   subject[0],
 			OAuthProviderID: subject[1],
