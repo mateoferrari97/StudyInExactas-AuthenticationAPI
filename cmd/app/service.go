@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
-	"github.com/coreos/go-oidc/oidc"
+	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/mateoferrari97/Users-API/cmd/app/auth"
 	"github.com/mateoferrari97/Users-API/internal/web"

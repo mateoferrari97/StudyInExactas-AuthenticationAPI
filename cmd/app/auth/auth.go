@@ -3,7 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
-	"github.com/coreos/go-oidc/oidc"
+	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
 )
 
