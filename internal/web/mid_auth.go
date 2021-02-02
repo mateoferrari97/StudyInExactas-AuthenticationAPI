@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/mateoferrari97/Kit/web"
 	"net/http"
 	"strings"
 )
@@ -13,28 +14,28 @@ func ValidateJWT(secret string) Middleware {
 		return func(w http.ResponseWriter, r *http.Request) {
 			token := r.Header.Get("Authorization")
 			if token == "" {
-				http.Error(w, "token is required", http.StatusForbidden)
+				_ = web.RespondJSON(w, web.NewError("token is required", http.StatusForbidden), http.StatusForbidden)
 				return
 			}
 
 			sToken := strings.Split(token, " ")
 			if len(sToken) != 2 {
-				http.Error(w, "invalid token length", http.StatusForbidden)
+				_ = web.RespondJSON(w, web.NewError("invalid token length", http.StatusForbidden), http.StatusForbidden)
 				return
 			}
 
 			if sToken[0] != "Bearer" {
-				http.Error(w, "invalid token type", http.StatusForbidden)
+				_ = web.RespondJSON(w, web.NewError("invalid token type", http.StatusForbidden), http.StatusForbidden)
 				return
 			}
 
 			if sToken[1] == "" {
-				http.Error(w, "token value is required", http.StatusForbidden)
+				_ = web.RespondJSON(w, web.NewError("token value is required", http.StatusForbidden), http.StatusForbidden)
 				return
 			}
 
 			if err := validateToken(sToken[1], secret); err != nil {
-				http.Error(w, err.Error(), http.StatusForbidden)
+				_ = web.RespondJSON(w, web.NewError(err.Error(), http.StatusForbidden), http.StatusForbidden)
 				return
 			}
 

@@ -88,6 +88,15 @@ func (s *Service) CreateJWT(idToken *oidc.IDToken) (string, error) {
 		}
 
 		cc = result
+	case "windowslive":
+		result, err := windowsClaimsParser(idToken)
+		if err != nil {
+			return "", err
+		}
+
+		cc = result
+	default:
+		return "", web.NewErrorf(http.StatusInternalServerError, "invalid provider: %s", providerAndUserProviderID[0])
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, cc)
@@ -131,6 +140,41 @@ func googleClaimsParser(idToken *oidc.IDToken) (customClaims, error) {
 			IssuedAt:  googleClaims.Iat,
 			Issuer:    googleClaims.Iss,
 			Subject:   googleClaims.Sub,
+		},
+	}, nil
+}
+
+func windowsClaimsParser(idToken *oidc.IDToken) (customClaims, error) {
+	var windowsClaims struct {
+		Aud     string `json:"aud"`
+		Exp     int64  `json:"exp"`
+		Iat     int64  `json:"iat"`
+		Iss     string `json:"iss"`
+		Name    string `json:"name"`
+		Picture string `json:"picture"`
+		Sub     string `json:"sub"`
+	}
+
+	if err := idToken.Claims(&windowsClaims); err != nil {
+		return customClaims{}, nil
+	}
+
+	subject := strings.Split(windowsClaims.Sub, "|")
+
+	return customClaims{
+		Metadata: metaData{
+			Name:            windowsClaims.Name,
+			Email:           "", // TODO
+			AvatarURL:       windowsClaims.Picture,
+			OAuthProvider:   subject[0],
+			OAuthProviderID: subject[1],
+		},
+		StandardClaims: jwt.StandardClaims{
+			Audience:  windowsClaims.Aud,
+			ExpiresAt: windowsClaims.Exp,
+			IssuedAt:  windowsClaims.Iat,
+			Issuer:    windowsClaims.Iss,
+			Subject:   windowsClaims.Sub,
 		},
 	}, nil
 }

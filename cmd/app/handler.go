@@ -30,7 +30,7 @@ func (h *Handler) Login() {
 			return err
 		}
 
-		session, err := h.store.New(r, "auth-session")
+		session, err := h.store.Get(r, "auth-session")
 		if err != nil {
 			return err
 		}
