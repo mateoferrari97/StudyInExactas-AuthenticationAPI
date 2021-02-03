@@ -2,11 +2,12 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/sessions"
 	"github.com/mateoferrari97/Users-API/internal/web"
 	"net/http"
-	"strings"
+	"os"
 )
 
 type Handler struct {
@@ -86,6 +87,8 @@ func (h *Handler) LoginCallback() {
 
 		http.SetCookie(w, c)
 
+		http.Redirect(w, r, fmt.Sprintf("%s/me", os.Getenv("BASE_URL")), http.StatusPermanentRedirect)
+
 		return nil
 	}
 
@@ -94,10 +97,16 @@ func (h *Handler) LoginCallback() {
 
 func (h *Handler) Me() {
 	wrapH := func(w http.ResponseWriter, r *http.Request) error {
-		t := r.Header.Get("Authorization")
+		c, err := r.Cookie("token")
+		if err != nil {
+			return err
+		}
 
-		sToken := strings.Split(t, " ")
-		token, err := jwt.Parse(sToken[1], func(token *jwt.Token) (interface{}, error) { return []byte("foooood"), nil })
+		// t := r.Header.Get("Authorization")
+
+		//sToken := strings.Split(c.Value, " ")
+		// token, err := jwt.Parse(sToken[1], func(token *jwt.Token) (interface{}, error) { return []byte("foooood"), nil })
+		token, err := jwt.Parse(c.Value, func(token *jwt.Token) (interface{}, error) { return []byte("foooood"), nil })
 		if err != nil {
 			return err
 		}
@@ -105,5 +114,5 @@ func (h *Handler) Me() {
 		return json.NewEncoder(w).Encode(token.Claims)
 	}
 
-	h.server.Wrap(http.MethodGet, "/me", wrapH, web.ValidateJWT("foooood"))
+	h.server.Wrap(http.MethodGet, "/me", wrapH) // web.ValidateJWT("foooood")
 }
