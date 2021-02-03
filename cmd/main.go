@@ -1,16 +1,12 @@
 package main
 
 import (
-	"errors"
 	"github.com/mateoferrari97/Users-API/cmd/app"
 	"github.com/mateoferrari97/Users-API/cmd/app/auth"
 	"github.com/mateoferrari97/Users-API/cmd/app/store"
+	"github.com/mateoferrari97/Users-API/cmd/app/token"
 	"github.com/mateoferrari97/Users-API/internal/web"
 	"os"
-)
-
-const (
-	_defaultPort = "8080"
 )
 
 func main() {
@@ -20,24 +16,21 @@ func main() {
 }
 
 func run() error {
-	env := os.Getenv("ENVIRONMENT")
-	authenticator, err := auth.NewAuthenticator(env)
+	authenticatorService, err := auth.NewAuthenticator(os.Getenv("ENVIRONMENT"))
 	if err != nil {
 		return err
 	}
 
-	port := _defaultPort
-	if env == "production" {
-		port = os.Getenv("PORT")
-		if port == "" {
-			return errors.New("empty port, need to configure it")
-		}
+	tokenService, err := token.NewToken("SIGNINGKEY")
+	if err != nil {
+		return err
 	}
 
-	server := web.NewServer(web.WithPort(port))
-	service := app.NewService(authenticator)
+	mainService := app.NewService(authenticatorService, tokenService)
 
-	handler := app.NewHandler(server, service, store.NewFileSystemStore())
+	server := web.NewServer(web.WithPort(os.Getenv("PORT")))
+
+	handler := app.NewHandler(server, mainService, store.NewFileSystemStore())
 	handler.Login()
 	handler.LoginCallback()
 	handler.Me()

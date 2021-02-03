@@ -2,12 +2,10 @@ package app
 
 import (
 	"encoding/json"
-	"fmt"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/sessions"
 	"github.com/mateoferrari97/Users-API/internal/web"
 	"net/http"
-	"os"
+	"strings"
 )
 
 type Handler struct {
@@ -26,7 +24,7 @@ func NewHandler(server *web.Server, service *Service, store sessions.Store) *Han
 
 func (h *Handler) Login() {
 	wrapH := func(w http.ResponseWriter, r *http.Request) error {
-		state, authCodeURL, err := h.service.CreateCSRFState()
+		authenticationURL, err := h.service.CreateAuthenticationURL()
 		if err != nil {
 			return err
 		}
@@ -36,12 +34,13 @@ func (h *Handler) Login() {
 			return err
 		}
 
-		session.Values["state"] = state
+		session.Values["state"] = authenticationURL.State()
 		if err = session.Save(r, w); err != nil {
 			return err
 		}
 
-		http.Redirect(w, r, authCodeURL, http.StatusTemporaryRedirect)
+		http.Redirect(w, r, authenticationURL.String(), http.StatusTemporaryRedirect)
+
 		return nil
 	}
 
@@ -68,12 +67,7 @@ func (h *Handler) LoginCallback() {
 			return web.NewError(http.StatusForbidden, "invalid code parameter")
 		}
 
-		idToken, err := h.service.Authenticate(r.Context(), r.URL.Query().Get("code"))
-		if err != nil {
-			return err
-		}
-
-		token, err := h.service.CreateJWT(idToken)
+		token, err := h.service.VerifyAuthentication(r.Context(), r.URL.Query().Get("code"))
 		if err != nil {
 			return err
 		}
@@ -87,8 +81,6 @@ func (h *Handler) LoginCallback() {
 
 		http.SetCookie(w, c)
 
-		http.Redirect(w, r, fmt.Sprintf("%s/me", os.Getenv("BASE_URL")), http.StatusPermanentRedirect)
-
 		return nil
 	}
 
@@ -97,22 +89,16 @@ func (h *Handler) LoginCallback() {
 
 func (h *Handler) Me() {
 	wrapH := func(w http.ResponseWriter, r *http.Request) error {
-		c, err := r.Cookie("token")
+		token := r.Header.Get("Authorization")
+
+		signedToken := strings.Split(token, " ")[0]
+		parsedToken, err := h.service.ParseToken(signedToken)
 		if err != nil {
 			return err
 		}
 
-		// t := r.Header.Get("Authorization")
-
-		//sToken := strings.Split(c.Value, " ")
-		// token, err := jwt.Parse(sToken[1], func(token *jwt.Token) (interface{}, error) { return []byte("foooood"), nil })
-		token, err := jwt.Parse(c.Value, func(token *jwt.Token) (interface{}, error) { return []byte("foooood"), nil })
-		if err != nil {
-			return err
-		}
-
-		return json.NewEncoder(w).Encode(token.Claims)
+		return json.NewEncoder(w).Encode(parsedToken)
 	}
 
-	h.server.Wrap(http.MethodGet, "/me", wrapH) // web.ValidateJWT("foooood")
+	h.server.Wrap(http.MethodGet, "/me", wrapH, web.ValidateJWT("foooood"))
 }
