@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"github.com/mateoferrari97/Users-API/cmd/app"
 	"github.com/mateoferrari97/Users-API/cmd/app/auth"
 	"github.com/mateoferrari97/Users-API/cmd/app/store"
@@ -19,17 +20,21 @@ func main() {
 }
 
 func run() error {
-	authenticator, err := auth.NewAuthenticator()
+	env := os.Getenv("ENVIRONMENT")
+	authenticator, err := auth.NewAuthenticator(env)
 	if err != nil {
 		return err
 	}
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = _defaultPort
+	port := _defaultPort
+	if env == "production" {
+		port = os.Getenv("PORT")
+		if port == "" {
+			return errors.New("empty port, need to configure it")
+		}
 	}
 
-	server := web.NewServer(web.WithPort(":" + port))
+	server := web.NewServer(web.WithPort(port))
 	service := app.NewService(authenticator)
 
 	handler := app.NewHandler(server, service, store.NewFileSystemStore())

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
+	"os"
 )
 
 type Authenticator struct {
@@ -13,7 +14,7 @@ type Authenticator struct {
 	Ctx      context.Context
 }
 
-func NewAuthenticator() (*Authenticator, error) {
+func NewAuthenticator(env string) (*Authenticator, error) {
 	ctx := context.Background()
 
 	provider, err := oidc.NewProvider(ctx, "https://food4everyone.us.auth0.com/")
@@ -21,10 +22,15 @@ func NewAuthenticator() (*Authenticator, error) {
 		return nil, fmt.Errorf("failed to get provider: %v", err)
 	}
 
+	baseURL := "http://localhost:8080"
+	if env == "production" {
+		baseURL = os.Getenv("BASE_URL")
+	}
+
 	conf := oauth2.Config{
 		ClientID:     "qHcV8N1iSntNMbZGxG6wP38sofmEK9aB",
 		ClientSecret: "YoEyXYMjjXf82CjoAYzOaNqJwFyDz5162kqBSuSI9kzqAEPwcBkjFM31s_JAZ8JG",
-		RedirectURL:  "http://localhost:8080/login/callback",
+		RedirectURL:  fmt.Sprintf("%s/login/callback", baseURL),
 		Endpoint:     provider.Endpoint(),
 		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
 	}
