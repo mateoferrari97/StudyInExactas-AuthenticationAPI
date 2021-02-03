@@ -28,7 +28,7 @@ func (s *Service) VerifyAuthentication(ctx context.Context, code string) (string
 		return "", err
 	}
 
-	return s.token.Create(idToken)
+	return s.token.Create(idToken.Claims, idToken.Subject)
 }
 
 func (s *Service) ParseToken(signedToken string) (token.Claims, error) {

@@ -3,7 +3,6 @@ package token
 import (
 	"errors"
 	"fmt"
-	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/dgrijalva/jwt-go"
 	"strings"
 )
@@ -20,6 +19,8 @@ type Token struct {
 	signingKey    string
 	signingMethod jwt.SigningMethod
 }
+
+type f func(v interface{}) error
 
 func NewToken(signingKey string) (*Token, error) {
 	return &Token{
@@ -44,29 +45,20 @@ type MetaData struct {
 	OAuthProvider string `json:"o_auth_provider"`
 }
 
-func (t *Token) Create(idToken *oidc.IDToken) (string, error) {
-	if idToken.Subject == "" {
+func (t *Token) Create(f func(v interface{}) error, subject string) (string, error) {
+	if subject == "" {
 		return "", ErrSubjectNotFound
 	}
 
-	subject := strings.Split(idToken.Subject, "|")
-	if len(subject) != 2 {
-		return "", ErrSubjectInvalidLength
-	}
-
-	if subject[0] == "" {
-		return "", ErrSubjectNotFound
-	}
-
-	if subject[0] != "google-oauth2" && subject[0] != "windowslive" {
+	if strings.Contains(subject, "google-oauth2") || strings.Contains(subject, "windowslive") {
 		return "", fmt.Errorf("%w: got: (%s), want: (google-oauth2 and windowslive)", ErrUnsupportedProvider, subject)
 	}
 
-	return t.create(idToken, subject[0])
+	return t.create(f, subject)
 }
 
-func (t *Token) create(idToken *oidc.IDToken, subject string) (string, error) {
-	customClaims, err := extractClaims(idToken, subject)
+func (t *Token) create(f func(v interface{}) error, subject string) (string, error) {
+	customClaims, err := extractClaims(f, subject)
 	if err != nil {
 		return "", err
 	}
@@ -81,7 +73,7 @@ func (t *Token) create(idToken *oidc.IDToken, subject string) (string, error) {
 	return signedToken, nil
 }
 
-func extractClaims(idToken *oidc.IDToken, subject string) (CClaims, error) {
+func extractClaims(f func(v interface{}) error, subject string) (CClaims, error) {
 	var claims struct {
 		Aud     string `json:"aud"`
 		Exp     int64  `json:"exp"`
@@ -93,7 +85,7 @@ func extractClaims(idToken *oidc.IDToken, subject string) (CClaims, error) {
 		Sub     string `json:"sub"`
 	}
 
-	if err := idToken.Claims(&claims); err != nil {
+	if err := f(&claims); err != nil {
 		return CClaims{}, err
 	}
 
