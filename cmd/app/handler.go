@@ -96,8 +96,12 @@ func (h *Handler) Me(mws ...web.Middleware) {
 	wrapH := func(w http.ResponseWriter, r *http.Request) error {
 		token := r.Header.Get("Authorization")
 
-		signedToken := strings.Split(token, " ")[0]
-		parsedToken, err := h.service.ParseToken(signedToken)
+		signedToken := strings.Split(token, " ")
+		if len(signedToken) != 2 {
+			return web.NewError(http.StatusForbidden, "invalid token length")
+		}
+
+		parsedToken, err := h.service.ParseToken(signedToken[1])
 		if err != nil {
 			return err
 		}
