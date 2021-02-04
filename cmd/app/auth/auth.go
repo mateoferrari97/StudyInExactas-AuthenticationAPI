@@ -33,8 +33,8 @@ func NewAuthenticator(env string) (*Authenticator, error) {
 	}
 
 	conf := oauth2.Config{
-		ClientID:     getClientID(env),
-		ClientSecret: getClientSecret(env),
+		ClientID:     "qHcV8N1iSntNMbZGxG6wP38sofmEK9aB",
+		ClientSecret: "YoEyXYMjjXf82CjoAYzOaNqJwFyDz5162kqBSuSI9kzqAEPwcBkjFM31s_JAZ8JG",
 		RedirectURL:  fmt.Sprintf("%s/login/callback", getBaseURL(env)),
 		Endpoint:     provider.Endpoint(),
 		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
@@ -43,8 +43,8 @@ func NewAuthenticator(env string) (*Authenticator, error) {
 	return &Authenticator{
 		provider:     provider,
 		config:       conf,
-		clientID:     getClientID(env),
-		clientSecret: getClientSecret(env),
+		clientID:     "qHcV8N1iSntNMbZGxG6wP38sofmEK9aB",
+		clientSecret: "YoEyXYMjjXf82CjoAYzOaNqJwFyDz5162kqBSuSI9kzqAEPwcBkjFM31s_JAZ8JG",
 	}, nil
 }
 
