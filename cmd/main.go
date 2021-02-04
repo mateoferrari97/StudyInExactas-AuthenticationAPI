@@ -40,6 +40,7 @@ func run() error {
 	handler := app.NewHandler(server, service, store)
 	handler.Login()
 	handler.LoginCallback()
+	handler.Logout(web.ValidateJWT(signingKey))
 	handler.Me(web.ValidateJWT(signingKey))
 
 	return server.Run()

@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/gorilla/sessions"
 	"github.com/mateoferrari97/Users-API/internal/web"
 	"net/http"
@@ -90,6 +91,23 @@ func (h *Handler) LoginCallback(mws ...web.Middleware) {
 	}
 
 	h.server.Wrap(http.MethodGet, "/login/callback", wrapH, mws...)
+}
+
+
+func (h *Handler) Logout(mws ...web.Middleware) {
+	wrapH := func(w http.ResponseWriter, r *http.Request) error {
+		c, err := r.Cookie("token")
+		if err != nil && !errors.Is(err, http.ErrNoCookie) {
+			return err
+		}
+
+		c.MaxAge = -1
+		http.SetCookie(w, c)
+
+		return nil
+	}
+
+	h.server.Wrap(http.MethodGet, "/logout", wrapH, mws...)
 }
 
 func (h *Handler) Me(mws ...web.Middleware) {
