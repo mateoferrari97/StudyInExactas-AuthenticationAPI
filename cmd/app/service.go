@@ -3,15 +3,15 @@ package app
 import (
 	"context"
 	"github.com/mateoferrari97/Users-API/cmd/app/auth"
-	"github.com/mateoferrari97/Users-API/cmd/app/token"
+	"github.com/mateoferrari97/Users-API/cmd/app/jwt"
 )
 
 type Service struct {
 	authenticator *auth.Authenticator
-	token         *token.Token
+	token         *jwt.JWT
 }
 
-func NewService(authenticator *auth.Authenticator, token *token.Token) *Service {
+func NewService(authenticator *auth.Authenticator, token *jwt.JWT) *Service {
 	return &Service{
 		authenticator: authenticator,
 		token:         token,
@@ -28,9 +28,9 @@ func (s *Service) VerifyAuthentication(ctx context.Context, code string) (string
 		return "", err
 	}
 
-	return s.token.Create(idToken.Claims, idToken.Subject)
+	return s.token.Create(idToken, idToken.Subject)
 }
 
-func (s *Service) ParseToken(signedToken string) (token.Claims, error) {
+func (s *Service) ParseToken(signedToken string) (jwt.Claims, error) {
 	return s.token.Claims(signedToken)
 }

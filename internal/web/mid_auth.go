@@ -49,7 +49,7 @@ func validateToken(t string, secret string) error {
 		if errors.As(err, &e) {
 			switch e.Errors {
 			case jwt.ValidationErrorMalformed:
-				return errors.New("malformed token")
+				return errors.New("malformed jwt")
 			case jwt.ValidationErrorExpired, jwt.ValidationErrorNotValidYet:
 				return errors.New("token has expired or is not valid yet")
 			default:

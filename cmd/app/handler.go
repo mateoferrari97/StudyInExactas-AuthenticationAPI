@@ -8,21 +8,26 @@ import (
 	"strings"
 )
 
-type Handler struct {
-	server  *web.Server
-	service *Service
-	store   sessions.Store
+type Store interface {
+	Get(r *http.Request, name string) (*sessions.Session, error)
+	Save(r *http.Request, w http.ResponseWriter, session *sessions.Session) error
 }
 
-func NewHandler(server *web.Server, service *Service, store sessions.Store) *Handler {
+type Handler struct {
+	service *Service
+	server  *web.Server
+	store   Store
+}
+
+func NewHandler(server *web.Server, service *Service, store Store) *Handler {
 	return &Handler{
-		server:  server,
 		service: service,
+		server:  server,
 		store:   store,
 	}
 }
 
-func (h *Handler) Login() {
+func (h *Handler) Login(mws ...web.Middleware) {
 	wrapH := func(w http.ResponseWriter, r *http.Request) error {
 		authenticationURL, err := h.service.CreateAuthenticationURL()
 		if err != nil {
@@ -44,10 +49,10 @@ func (h *Handler) Login() {
 		return nil
 	}
 
-	h.server.Wrap(http.MethodGet, "/login", wrapH)
+	h.server.Wrap(http.MethodGet, "/login", wrapH, mws...)
 }
 
-func (h *Handler) LoginCallback() {
+func (h *Handler) LoginCallback(mws ...web.Middleware) {
 	wrapH := func(w http.ResponseWriter, r *http.Request) error {
 		session, err := h.store.Get(r, "auth-session")
 		if err != nil {
@@ -84,10 +89,10 @@ func (h *Handler) LoginCallback() {
 		return nil
 	}
 
-	h.server.Wrap(http.MethodGet, "/login/callback", wrapH)
+	h.server.Wrap(http.MethodGet, "/login/callback", wrapH, mws...)
 }
 
-func (h *Handler) Me() {
+func (h *Handler) Me(mws ...web.Middleware) {
 	wrapH := func(w http.ResponseWriter, r *http.Request) error {
 		token := r.Header.Get("Authorization")
 
@@ -100,5 +105,5 @@ func (h *Handler) Me() {
 		return json.NewEncoder(w).Encode(parsedToken)
 	}
 
-	h.server.Wrap(http.MethodGet, "/me", wrapH, web.ValidateJWT("foooood"))
+	h.server.Wrap(http.MethodGet, "/me", wrapH, mws...)
 }

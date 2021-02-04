@@ -1,4 +1,4 @@
-package token
+package jwt
 
 import (
 	"errors"
@@ -8,29 +8,30 @@ import (
 )
 
 var (
-	ErrSubjectNotFound      = errors.New("token: subject not found")
-	ErrSubjectInvalidLength = errors.New("token: subject invalid length")
-	ErrUnsupportedProvider  = errors.New("token: unsupported provider")
-	ErrTokenMalformed       = errors.New("token: malformed token")
-	ErrTokenTime            = errors.New("token: token has expired or is not valid yet")
+	ErrSubjectNotFound     = errors.New("jwt: subject not found")
+	ErrUnsupportedProvider = errors.New("jwt: unsupported provider")
+	ErrTokenMalformed      = errors.New("jwt: malformed jwt")
+	ErrTokenTime           = errors.New("jwt: token has expired or is not valid yet")
 )
 
-type Token struct {
+type JWT struct {
 	signingKey    string
 	signingMethod jwt.SigningMethod
 }
 
-type f func(v interface{}) error
-
-func NewToken(signingKey string) (*Token, error) {
-	return &Token{
+func NewJWT(signingKey string) (*JWT, error) {
+	return &JWT{
 		signingKey:    signingKey,
 		signingMethod: jwt.SigningMethodHS256,
 	}, nil
 }
 
+type UnmarshalClaims interface {
+	Claims(v interface{}) error
+}
+
 type Claims interface {
-	Valid() error
+	jwt.Claims
 }
 
 type CClaims struct {
@@ -45,27 +46,27 @@ type MetaData struct {
 	OAuthProvider string `json:"o_auth_provider"`
 }
 
-func (t *Token) Create(f func(v interface{}) error, subject string) (string, error) {
+func (t *JWT) Create(v UnmarshalClaims, subject string) (string, error) {
 	if subject == "" {
 		return "", ErrSubjectNotFound
 	}
 
-	if strings.Contains(subject, "google-oauth2") || strings.Contains(subject, "windowslive") {
+	if !strings.Contains(subject, "google-oauth2") && !strings.Contains(subject, "windowslive") {
 		return "", fmt.Errorf("%w: got: (%s), want: (google-oauth2 and windowslive)", ErrUnsupportedProvider, subject)
 	}
 
-	return t.create(f, subject)
+	return t.create(v, subject)
 }
 
-func (t *Token) create(f func(v interface{}) error, subject string) (string, error) {
-	customClaims, err := extractClaims(f, subject)
+func (t *JWT) create(v UnmarshalClaims, subject string) (string, error) {
+	customClaims, err := extractClaims(v, subject)
 	if err != nil {
 		return "", err
 	}
 
 	token := jwt.NewWithClaims(t.signingMethod, customClaims)
 
-	signedToken, err := token.SignedString(t.signingKey)
+	signedToken, err := token.SignedString([]byte(t.signingKey))
 	if err != nil {
 		return "", err
 	}
@@ -73,7 +74,7 @@ func (t *Token) create(f func(v interface{}) error, subject string) (string, err
 	return signedToken, nil
 }
 
-func extractClaims(f func(v interface{}) error, subject string) (CClaims, error) {
+func extractClaims(v UnmarshalClaims, subject string) (CClaims, error) {
 	var claims struct {
 		Aud     string `json:"aud"`
 		Exp     int64  `json:"exp"`
@@ -85,7 +86,7 @@ func extractClaims(f func(v interface{}) error, subject string) (CClaims, error)
 		Sub     string `json:"sub"`
 	}
 
-	if err := f(&claims); err != nil {
+	if err := v.Claims(&claims); err != nil {
 		return CClaims{}, err
 	}
 
@@ -106,7 +107,7 @@ func extractClaims(f func(v interface{}) error, subject string) (CClaims, error)
 	}, nil
 }
 
-func (t *Token) Claims(signedToken string) (Claims, error) {
+func (t *JWT) Claims(signedToken string) (Claims, error) {
 	token, err := jwt.Parse(signedToken, func(token *jwt.Token) (interface{}, error) { return []byte(t.signingKey), nil })
 	if err != nil {
 		var e *jwt.ValidationError
@@ -121,7 +122,7 @@ func (t *Token) Claims(signedToken string) (Claims, error) {
 			}
 		}
 
-		return nil, fmt.Errorf("couldn't handle this token: %v", err)
+		return nil, fmt.Errorf("could not handle this jwt: %v", err)
 	}
 
 	return token.Claims, nil

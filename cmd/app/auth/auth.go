@@ -18,8 +18,10 @@ var (
 )
 
 type Authenticator struct {
-	provider *oidc.Provider
-	config   oauth2.Config
+	provider     *oidc.Provider
+	config       oauth2.Config
+	clientID     string
+	clientSecret string
 }
 
 func NewAuthenticator(env string) (*Authenticator, error) {
@@ -30,22 +32,19 @@ func NewAuthenticator(env string) (*Authenticator, error) {
 		return nil, fmt.Errorf("failed to get provider: %v", err)
 	}
 
-	baseURL := "http://localhost:8080"
-	if env == "production" {
-		baseURL = os.Getenv("BASE_URL")
-	}
-
 	conf := oauth2.Config{
-		ClientID:     "qHcV8N1iSntNMbZGxG6wP38sofmEK9aB",
-		ClientSecret: "YoEyXYMjjXf82CjoAYzOaNqJwFyDz5162kqBSuSI9kzqAEPwcBkjFM31s_JAZ8JG",
-		RedirectURL:  fmt.Sprintf("%s/login/callback", baseURL),
+		ClientID:     getClientID(env),
+		ClientSecret: getClientSecret(env),
+		RedirectURL:  fmt.Sprintf("%s/login/callback", getBaseURL(env)),
 		Endpoint:     provider.Endpoint(),
 		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
 	}
 
 	return &Authenticator{
-		provider: provider,
-		config:   conf,
+		provider:     provider,
+		config:       conf,
+		clientID:     getClientID(env),
+		clientSecret: getClientSecret(env),
 	}, nil
 }
 
@@ -87,7 +86,7 @@ func (a *Authenticator) Verify(ctx context.Context, code string) (*oidc.IDToken,
 		return nil, fmt.Errorf("%w: %v", ErrIDTokenNotFound, err)
 	}
 
-	cfg := &oidc.Config{ClientID: "qHcV8N1iSntNMbZGxG6wP38sofmEK9aB"}
+	cfg := &oidc.Config{ClientID: a.clientID}
 
 	idToken, err := a.provider.Verifier(cfg).Verify(ctx, rawIDToken)
 	if err != nil {
@@ -95,4 +94,31 @@ func (a *Authenticator) Verify(ctx context.Context, code string) (*oidc.IDToken,
 	}
 
 	return idToken, nil
+}
+
+func getBaseURL(env string) string {
+	result := "http://localhost:8080"
+	if env == "production" {
+		result = os.Getenv("BASE_URL")
+	}
+
+	return result
+}
+
+func getClientID(env string) string {
+	result := "clientID"
+	if env == "production" {
+		result = os.Getenv("AUTH0_CLIENT_ID")
+	}
+
+	return result
+}
+
+func getClientSecret(env string) string {
+	result := "clientSecret"
+	if env == "production" {
+		result = os.Getenv("AUTH0_CLIENT_SECRET")
+	}
+
+	return result
 }
