@@ -74,6 +74,7 @@ func handleError(w http.ResponseWriter, err error) {
 	if errors.As(err, &webError) {
 		statusCode = webError.StatusCode
 	} else {
+		err = NewError(http.StatusInternalServerError, err.Error())
 		statusCode = http.StatusInternalServerError
 	}
 

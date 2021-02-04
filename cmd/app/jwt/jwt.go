@@ -10,7 +10,7 @@ import (
 var (
 	ErrSubjectNotFound     = errors.New("jwt: subject not found")
 	ErrUnsupportedProvider = errors.New("jwt: unsupported provider")
-	ErrTokenMalformed      = errors.New("jwt: malformed jwt")
+	ErrTokenMalformed      = errors.New("jwt: malformed token")
 	ErrTokenTime           = errors.New("jwt: token has expired or is not valid yet")
 )
 
