@@ -101,7 +101,7 @@ func (h *Handler) Me(mws ...web.Middleware) {
 			return web.NewError(http.StatusForbidden, "invalid token length")
 		}
 
-		parsedToken, err := h.service.ParseToken(signedToken[0])
+		parsedToken, err := h.service.ParseToken(signedToken[1])
 		if err != nil {
 			return err
 		}
