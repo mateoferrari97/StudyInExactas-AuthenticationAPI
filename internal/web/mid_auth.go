@@ -13,28 +13,28 @@ func ValidateJWT(secret string) Middleware {
 		return func(w http.ResponseWriter, r *http.Request) {
 			token := r.Header.Get("Authorization")
 			if token == "" {
-				_ = RespondJSON(w, NewError(http.StatusForbidden, "token is required"), http.StatusForbidden)
+				http.Error(w, "token is required", http.StatusForbidden)
 				return
 			}
 
 			sToken := strings.Split(token, " ")
 			if len(sToken) != 2 {
-				_ = RespondJSON(w, NewError(http.StatusForbidden, "invalid token length"), http.StatusForbidden)
+				http.Error(w, "invalid token length", http.StatusForbidden)
 				return
 			}
 
 			if sToken[0] != "Bearer" {
-				_ = RespondJSON(w, NewError(http.StatusForbidden, "invalid token type"), http.StatusForbidden)
+				http.Error(w, "invalid token type", http.StatusForbidden)
 				return
 			}
 
 			if sToken[1] == "" {
-				_ = RespondJSON(w, NewError(http.StatusForbidden, "token value is required"), http.StatusForbidden)
+				http.Error(w, "token value is required", http.StatusForbidden)
 				return
 			}
 
 			if err := validateToken(sToken[1], secret); err != nil {
-				_ = RespondJSON(w, NewError(http.StatusForbidden, err.Error()), http.StatusForbidden)
+				http.Error(w, err.Error(), http.StatusForbidden)
 				return
 			}
 
