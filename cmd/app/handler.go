@@ -6,7 +6,6 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/mateoferrari97/Users-API/internal/web"
 	"net/http"
-	"strings"
 )
 
 type Store interface {
@@ -73,8 +72,15 @@ func (h *Handler) LoginCallback(mws ...web.Middleware) {
 			return web.NewError(http.StatusForbidden, "invalid code parameter")
 		}
 
-		token, err := h.service.VerifyAuthentication(r.Context(), r.URL.Query().Get("code"))
+		token, err := h.service.Verify(r.Context(), r.URL.Query().Get("code"))
 		if err != nil {
+			switch err {
+			case ErrEntityNotFound:
+				return web.NewError(http.StatusNotFound, err.Error())
+			case ErrVerification:
+				return web.NewError(http.StatusForbidden, err.Error())
+			}
+
 			return err
 		}
 
@@ -92,7 +98,6 @@ func (h *Handler) LoginCallback(mws ...web.Middleware) {
 
 	h.server.Wrap(http.MethodGet, "/login/callback", wrapH, mws...)
 }
-
 
 func (h *Handler) Logout(mws ...web.Middleware) {
 	wrapH := func(w http.ResponseWriter, r *http.Request) error {
@@ -114,13 +119,12 @@ func (h *Handler) Me(mws ...web.Middleware) {
 	wrapH := func(w http.ResponseWriter, r *http.Request) error {
 		token := r.Header.Get("Authorization")
 
-		signedToken := strings.Split(token, " ")
-		if len(signedToken) != 2 {
-			return web.NewError(http.StatusForbidden, "invalid token length")
-		}
-
-		parsedToken, err := h.service.ParseToken(signedToken[1])
+		parsedToken, err := h.service.ParseToken(token)
 		if err != nil {
+			if errors.Is(err, ErrTokenParse) {
+				return web.NewError(http.StatusForbidden, err.Error())
+			}
+
 			return err
 		}
 

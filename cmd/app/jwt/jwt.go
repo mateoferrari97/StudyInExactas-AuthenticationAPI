@@ -19,11 +19,11 @@ type JWT struct {
 	signingMethod jwt.SigningMethod
 }
 
-func NewJWT(signingKey string) (*JWT, error) {
+func NewJWT(signingKey string) *JWT {
 	return &JWT{
 		signingKey:    signingKey,
 		signingMethod: jwt.SigningMethodHS256,
-	}, nil
+	}
 }
 
 type UnmarshalClaims interface {

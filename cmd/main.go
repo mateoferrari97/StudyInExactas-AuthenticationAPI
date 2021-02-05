@@ -17,22 +17,21 @@ func main() {
 
 func run() error {
 	var (
-		env        = getEnv()
-		port       = getPort()
-		signingKey = getJWTSigningKey()
-		storeKey   = getStoreKey()
+		env          = getEnv()
+		port         = getPort()
+		signingKey   = getJWTSigningKey()
+		storeKey     = getStoreKey()
+		baseURL      = getBaseURL(env)
+		clientID     = getClientID(env)
+		clientSecret = getClientSecret(env)
 	)
 
-	authenticator, err := auth.NewAuthenticator(env)
+	authenticator, err := auth.NewAuthenticator(baseURL, clientID, clientSecret)
 	if err != nil {
 		return err
 	}
 
-	token, err := jwt.NewJWT(signingKey)
-	if err != nil {
-		return err
-	}
-
+	token := jwt.NewJWT(signingKey)
 	service := app.NewService(authenticator, token)
 	server := web.NewServer(web.WithPort(port))
 	store := sessions.NewCookieStore([]byte(storeKey))
@@ -40,7 +39,7 @@ func run() error {
 	handler := app.NewHandler(server, service, store)
 	handler.Login()
 	handler.LoginCallback()
-	handler.Logout()
+	handler.Logout(web.ValidateJWT(signingKey))
 	handler.Me(web.ValidateJWT(signingKey))
 
 	return server.Run()
@@ -77,6 +76,33 @@ func getStoreKey() string {
 	result := os.Getenv("STORE_KEY")
 	if result == "" {
 		result = "STORE_KEY"
+	}
+
+	return result
+}
+
+func getBaseURL(env string) string {
+	result := "http://localhost:8080"
+	if env == "production" {
+		result = os.Getenv("BASE_URL")
+	}
+
+	return result
+}
+
+func getClientID(env string) string {
+	result := "clientID"
+	if env == "production" {
+		result = os.Getenv("AUTH0_CLIENT_ID")
+	}
+
+	return result
+}
+
+func getClientSecret(env string) string {
+	result := "clientSecret"
+	if env == "production" {
+		result = os.Getenv("AUTH0_CLIENT_SECRET")
 	}
 
 	return result

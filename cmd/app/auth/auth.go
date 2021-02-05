@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
-	"os"
 )
 
 var (
@@ -24,7 +23,7 @@ type Authenticator struct {
 	clientSecret string
 }
 
-func NewAuthenticator(env string) (*Authenticator, error) {
+func NewAuthenticator(baseURL string, clientID string, clientSecret string) (*Authenticator, error) {
 	ctx := context.Background()
 
 	provider, err := oidc.NewProvider(ctx, "https://food4everyone.us.auth0.com/")
@@ -33,9 +32,9 @@ func NewAuthenticator(env string) (*Authenticator, error) {
 	}
 
 	conf := oauth2.Config{
-		ClientID:     "qHcV8N1iSntNMbZGxG6wP38sofmEK9aB",
-		ClientSecret: "YoEyXYMjjXf82CjoAYzOaNqJwFyDz5162kqBSuSI9kzqAEPwcBkjFM31s_JAZ8JG",
-		RedirectURL:  fmt.Sprintf("%s/login/callback", getBaseURL(env)),
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		RedirectURL:  fmt.Sprintf("%s/login/callback", baseURL),
 		Endpoint:     provider.Endpoint(),
 		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
 	}
@@ -43,8 +42,8 @@ func NewAuthenticator(env string) (*Authenticator, error) {
 	return &Authenticator{
 		provider:     provider,
 		config:       conf,
-		clientID:     "qHcV8N1iSntNMbZGxG6wP38sofmEK9aB",
-		clientSecret: "YoEyXYMjjXf82CjoAYzOaNqJwFyDz5162kqBSuSI9kzqAEPwcBkjFM31s_JAZ8JG",
+		clientID:     clientID,
+		clientSecret: clientSecret,
 	}, nil
 }
 
@@ -94,31 +93,4 @@ func (a *Authenticator) Verify(ctx context.Context, code string) (*oidc.IDToken,
 	}
 
 	return idToken, nil
-}
-
-func getBaseURL(env string) string {
-	result := "http://localhost:8080"
-	if env == "production" {
-		result = os.Getenv("BASE_URL")
-	}
-
-	return result
-}
-
-func getClientID(env string) string {
-	result := "clientID"
-	if env == "production" {
-		result = os.Getenv("AUTH0_CLIENT_ID")
-	}
-
-	return result
-}
-
-func getClientSecret(env string) string {
-	result := "clientSecret"
-	if env == "production" {
-		result = os.Getenv("AUTH0_CLIENT_SECRET")
-	}
-
-	return result
 }
