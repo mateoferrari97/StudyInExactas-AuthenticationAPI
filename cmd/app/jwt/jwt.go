@@ -43,7 +43,6 @@ type MetaData struct {
 	Name          string `json:"name"`
 	Email         string `json:"email"`
 	AvatarURL     string `json:"avatar_url"`
-	OAuthProvider string `json:"o_auth_provider"`
 }
 
 func (t *JWT) Create(v UnmarshalClaims, subject string) (string, error) {
@@ -95,7 +94,6 @@ func extractClaims(v UnmarshalClaims, subject string) (CClaims, error) {
 			Name:          claims.Name,
 			Email:         claims.Email,
 			AvatarURL:     claims.Picture,
-			OAuthProvider: subject,
 		},
 		StandardClaims: jwt.StandardClaims{
 			Audience:  claims.Aud,
