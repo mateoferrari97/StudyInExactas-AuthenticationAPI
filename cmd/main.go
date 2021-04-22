@@ -1,12 +1,15 @@
 package main
 
 import (
-	"github.com/gorilla/sessions"
-	"github.com/mateoferrari97/Users-API/cmd/app"
-	"github.com/mateoferrari97/Users-API/cmd/app/auth"
-	"github.com/mateoferrari97/Users-API/cmd/app/jwt"
-	"github.com/mateoferrari97/Users-API/internal/web"
+	"github.com/mateoferrari97/Users-API/cmd/app/service/auth"
 	"os"
+
+	"github.com/mateoferrari97/Kit/web/server"
+	"github.com/mateoferrari97/Users-API/cmd/app"
+	"github.com/mateoferrari97/Users-API/cmd/app/service"
+	"github.com/mateoferrari97/Users-API/cmd/app/service/jwt"
+
+	"github.com/gorilla/sessions"
 )
 
 func main() {
@@ -31,18 +34,18 @@ func run() error {
 		return err
 	}
 
+	sv := server.NewServer()
 	token := jwt.NewJWT(signingKey)
-	service := app.NewService(authenticator, token)
-	server := web.NewServer(web.WithPort(port))
-	store := sessions.NewCookieStore([]byte(storeKey))
+	service_ := service.NewService(authenticator, token)
+	storage := sessions.NewCookieStore([]byte(storeKey))
 
-	handler := app.NewHandler(server, service, store)
+	handler := app.NewHandler(sv, service_, storage)
 	handler.Login()
 	handler.LoginCallback()
-	handler.Logout(web.ValidateJWT(signingKey))
-	handler.Me(web.ValidateJWT(signingKey))
+	handler.Logout()
+	handler.Me() // server.ValidateJWT(signingKey)
 
-	return server.Run()
+	return sv.Run(port)
 }
 
 func getEnv() string {
@@ -66,7 +69,7 @@ func getJWTSigningKey() string {
 func getPort() string {
 	result := os.Getenv("PORT")
 	if result == "" {
-		result = "8080"
+		result = ":8080"
 	}
 
 	return result
@@ -91,7 +94,7 @@ func getBaseURL(env string) string {
 }
 
 func getClientID(env string) string {
-	result := "clientID"
+	result := "qHcV8N1iSntNMbZGxG6wP38sofmEK9aB"
 	if env == "production" {
 		result = os.Getenv("AUTH0_CLIENT_ID")
 	}
@@ -100,7 +103,7 @@ func getClientID(env string) string {
 }
 
 func getClientSecret(env string) string {
-	result := "clientSecret"
+	result := "YoEyXYMjjXf82CjoAYzOaNqJwFyDz5162kqBSuSI9kzqAEPwcBkjFM31s_JAZ8JG"
 	if env == "production" {
 		result = os.Getenv("AUTH0_CLIENT_SECRET")
 	}

@@ -1,66 +1,78 @@
 package app
 
 import (
-	"encoding/json"
+	"context"
 	"errors"
-	"github.com/gorilla/sessions"
-	"github.com/mateoferrari97/Users-API/internal/web"
 	"net/http"
+
+	"github.com/mateoferrari97/Kit/web/server"
+	_service "github.com/mateoferrari97/Users-API/cmd/app/service"
+
+	"github.com/gorilla/sessions"
 )
 
-type Store interface {
+type Wrapper interface {
+	Wrap(method, pattern string, f server.HandlerFunc, mws ...server.Middleware)
+}
+
+type Service interface {
+	CreateAuthentication() (url, state string, err error)
+	VerifyAuthentication(ctx context.Context, code string) (string, error)
+	GetMyInformation(token string) ([]byte, error)
+}
+
+type Storage interface {
 	Get(r *http.Request, name string) (*sessions.Session, error)
 	Save(r *http.Request, w http.ResponseWriter, session *sessions.Session) error
 }
 
 type Handler struct {
-	service *Service
-	server  *web.Server
-	store   Store
+	service Service
+	wrapper Wrapper
+	storage Storage
 }
 
-func NewHandler(server *web.Server, service *Service, store Store) *Handler {
+func NewHandler(wrapper Wrapper, service Service, storage Storage) *Handler {
 	return &Handler{
 		service: service,
-		server:  server,
-		store:   store,
+		wrapper: wrapper,
+		storage: storage,
 	}
 }
 
-func (h *Handler) Login(mws ...web.Middleware) {
+func (h *Handler) Login(mws ...server.Middleware) {
 	wrapH := func(w http.ResponseWriter, r *http.Request) error {
-		authenticationURL, err := h.service.CreateAuthenticationURL()
+		uri, state, err := h.service.CreateAuthentication()
 		if err != nil {
 			return err
 		}
 
-		session, err := h.store.Get(r, "auth-session")
+		session, err := h.storage.Get(r, "auth-session")
 		if err != nil {
 			return err
 		}
 
-		session.Values["state"] = authenticationURL.State()
+		session.Values["state"] = state
 		if err = session.Save(r, w); err != nil {
 			return err
 		}
 
-		http.Redirect(w, r, authenticationURL.String(), http.StatusTemporaryRedirect)
-
+		http.Redirect(w, r, uri, http.StatusTemporaryRedirect)
 		return nil
 	}
 
-	h.server.Wrap(http.MethodGet, "/login", wrapH, mws...)
+	h.wrapper.Wrap(http.MethodGet, "/login", wrapH, mws...)
 }
 
-func (h *Handler) LoginCallback(mws ...web.Middleware) {
+func (h *Handler) LoginCallback(mws ...server.Middleware) {
 	wrapH := func(w http.ResponseWriter, r *http.Request) error {
-		session, err := h.store.Get(r, "auth-session")
+		session, err := h.storage.Get(r, "auth-session")
 		if err != nil {
 			return err
 		}
 
 		if r.URL.Query().Get("state") != session.Values["state"] {
-			return web.NewError(http.StatusForbidden, "invalid state parameter")
+			return server.NewError("invalid state parameter", http.StatusForbidden)
 		}
 
 		session.Options.MaxAge = -1
@@ -69,16 +81,16 @@ func (h *Handler) LoginCallback(mws ...web.Middleware) {
 		}
 
 		if r.URL.Query().Get("code") == "" {
-			return web.NewError(http.StatusForbidden, "invalid code parameter")
+			return server.NewError("invalid code parameter", http.StatusForbidden)
 		}
 
-		token, err := h.service.Verify(r.Context(), r.URL.Query().Get("code"))
+		token, err := h.service.VerifyAuthentication(r.Context(), r.URL.Query().Get("code"))
 		if err != nil {
 			switch err {
-			case ErrEntityNotFound:
-				return web.NewError(http.StatusNotFound, err.Error())
-			case ErrVerification:
-				return web.NewError(http.StatusForbidden, err.Error())
+			case _service.ErrNotFound:
+				return server.NewError(err.Error(), http.StatusNotFound)
+			case _service.ErrVerification:
+				return server.NewError(err.Error(), http.StatusForbidden)
 			}
 
 			return err
@@ -92,17 +104,20 @@ func (h *Handler) LoginCallback(mws ...web.Middleware) {
 		}
 
 		http.SetCookie(w, c)
-
 		return nil
 	}
 
-	h.server.Wrap(http.MethodGet, "/login/callback", wrapH, mws...)
+	h.wrapper.Wrap(http.MethodGet, "/login/callback", wrapH, mws...)
 }
 
-func (h *Handler) Logout(mws ...web.Middleware) {
+func (h *Handler) Logout(mws ...server.Middleware) {
 	wrapH := func(w http.ResponseWriter, r *http.Request) error {
 		c, err := r.Cookie("token")
-		if err != nil && !errors.Is(err, http.ErrNoCookie) {
+		if err != nil {
+			if errors.Is(err, http.ErrNoCookie) {
+				return nil
+			}
+
 			return err
 		}
 
@@ -112,24 +127,24 @@ func (h *Handler) Logout(mws ...web.Middleware) {
 		return nil
 	}
 
-	h.server.Wrap(http.MethodGet, "/logout", wrapH, mws...)
+	h.wrapper.Wrap(http.MethodGet, "/logout", wrapH, mws...)
 }
 
-func (h *Handler) Me(mws ...web.Middleware) {
+func (h *Handler) Me(mws ...server.Middleware) {
 	wrapH := func(w http.ResponseWriter, r *http.Request) error {
 		token := r.Header.Get("Authorization")
 
-		parsedToken, err := h.service.ParseToken(token)
+		myInformation, err := h.service.GetMyInformation(token)
 		if err != nil {
-			if errors.Is(err, ErrTokenParse) {
-				return web.NewError(http.StatusForbidden, err.Error())
+			if errors.Is(err, _service.ErrParse) {
+				return server.NewError(err.Error(), http.StatusForbidden)
 			}
 
 			return err
 		}
 
-		return json.NewEncoder(w).Encode(parsedToken)
+		return server.RespondJSON(w, myInformation, http.StatusOK)
 	}
 
-	h.server.Wrap(http.MethodGet, "/me", wrapH, mws...)
+	h.wrapper.Wrap(http.MethodGet, "/me", wrapH, mws...)
 }

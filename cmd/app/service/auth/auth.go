@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
 )
@@ -60,21 +61,18 @@ func (au *AuthenticationURL) State() string {
 	return au.state
 }
 
-func (a *Authenticator) CreateAuthenticationURL() (*AuthenticationURL, error) {
+func (a *Authenticator) CreateAuthenticationURL() (url, state string, err error) {
 	b := make([]byte, 32)
-	_, err := rand.Read(b)
+	_, err = rand.Read(b)
 	if err != nil {
-		return nil, err
+		return "", "", err
 	}
 
 	CSRFState := base64.StdEncoding.EncodeToString(b)
-	return &AuthenticationURL{
-		url:   a.config.AuthCodeURL(CSRFState),
-		state: CSRFState,
-	}, nil
+	return a.config.AuthCodeURL(CSRFState), CSRFState, nil
 }
 
-func (a *Authenticator) Verify(ctx context.Context, code string) (*oidc.IDToken, error) {
+func (a *Authenticator) VerifyAuthentication(ctx context.Context, code string) (*oidc.IDToken, error) {
 	token, err := a.config.Exchange(ctx, code)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrTokenNotFound, err)

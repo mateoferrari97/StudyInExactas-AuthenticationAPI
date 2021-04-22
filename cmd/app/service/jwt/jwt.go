@@ -3,8 +3,9 @@ package jwt
 import (
 	"errors"
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
 	"strings"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 var (
@@ -40,9 +41,9 @@ type CClaims struct {
 }
 
 type MetaData struct {
-	Name          string `json:"name"`
-	Email         string `json:"email"`
-	AvatarURL     string `json:"avatar_url"`
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	AvatarURL string `json:"avatar_url"`
 }
 
 func (t *JWT) Create(v UnmarshalClaims, subject string) (string, error) {
@@ -91,9 +92,9 @@ func extractClaims(v UnmarshalClaims, subject string) (CClaims, error) {
 
 	return CClaims{
 		Metadata: MetaData{
-			Name:          claims.Name,
-			Email:         claims.Email,
-			AvatarURL:     claims.Picture,
+			Name:      claims.Name,
+			Email:     claims.Email,
+			AvatarURL: claims.Picture,
 		},
 		StandardClaims: jwt.StandardClaims{
 			Audience:  claims.Aud,
@@ -108,15 +109,15 @@ func extractClaims(v UnmarshalClaims, subject string) (CClaims, error) {
 func (t *JWT) Claims(signedToken string) (Claims, error) {
 	token, err := jwt.Parse(signedToken, func(token *jwt.Token) (interface{}, error) { return []byte(t.signingKey), nil })
 	if err != nil {
-		var e *jwt.ValidationError
-		if errors.As(err, &e) {
-			switch e.Errors {
+		var hErr *jwt.ValidationError
+		if errors.As(err, &hErr) {
+			switch hErr.Errors {
 			case jwt.ValidationErrorMalformed:
 				return nil, ErrTokenMalformed
 			case jwt.ValidationErrorExpired, jwt.ValidationErrorNotValidYet:
 				return nil, ErrTokenTime
 			default:
-				return nil, e
+				return nil, hErr
 			}
 		}
 
