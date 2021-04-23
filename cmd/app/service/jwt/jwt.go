@@ -9,10 +9,10 @@ import (
 )
 
 var (
-	ErrSubjectNotFound     = errors.New("jwt: subject not found")
+	ErrNotFound            = errors.New("jwt: resource not found")
 	ErrUnsupportedProvider = errors.New("jwt: unsupported provider")
-	ErrTokenMalformed      = errors.New("jwt: malformed token")
-	ErrTokenTime           = errors.New("jwt: token has expired or is not valid yet")
+	ErrMalformedToken      = errors.New("jwt: malformed token")
+	ErrExpiredToken        = errors.New("jwt: token has expired or is not valid yet")
 )
 
 type JWT struct {
@@ -48,7 +48,7 @@ type MetaData struct {
 
 func (t *JWT) Create(v UnmarshalClaims, subject string) (string, error) {
 	if subject == "" {
-		return "", ErrSubjectNotFound
+		return "", ErrNotFound
 	}
 
 	if !strings.Contains(subject, "google-oauth2") && !strings.Contains(subject, "windowslive") {
@@ -68,7 +68,7 @@ func (t *JWT) create(v UnmarshalClaims, subject string) (string, error) {
 
 	signedToken, err := token.SignedString([]byte(t.signingKey))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("could not sign token: %v", err)
 	}
 
 	return signedToken, nil
@@ -87,7 +87,7 @@ func extractClaims(v UnmarshalClaims, subject string) (CClaims, error) {
 	}
 
 	if err := v.Claims(&claims); err != nil {
-		return CClaims{}, err
+		return CClaims{}, fmt.Errorf("could not fetch claims: %v", err)
 	}
 
 	return CClaims{
@@ -113,15 +113,15 @@ func (t *JWT) Claims(signedToken string) (Claims, error) {
 		if errors.As(err, &hErr) {
 			switch hErr.Errors {
 			case jwt.ValidationErrorMalformed:
-				return nil, ErrTokenMalformed
+				return nil, ErrMalformedToken
 			case jwt.ValidationErrorExpired, jwt.ValidationErrorNotValidYet:
-				return nil, ErrTokenTime
+				return nil, ErrExpiredToken
 			default:
 				return nil, hErr
 			}
 		}
 
-		return nil, fmt.Errorf("could not handle this jwt: %v", err)
+		return nil, fmt.Errorf("could not handle jwt: %v", err)
 	}
 
 	return token.Claims, nil

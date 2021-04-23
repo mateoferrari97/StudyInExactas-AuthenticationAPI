@@ -37,22 +37,22 @@ func (s *Service) VerifyAuthentication(ctx context.Context, code string) (string
 	idToken, err := s.authenticator.VerifyAuthentication(ctx, code)
 	if err != nil {
 		switch err {
-		case auth.ErrTokenNotFound, auth.ErrIDTokenNotFound:
-			return "", ErrNotFound
+		case auth.ErrNotFound:
+			return "", fmt.Errorf("could not verify authentication: %w", ErrNotFound)
 		case auth.ErrAuthenticationFailed:
-			return "", ErrVerification
+			return "", fmt.Errorf("could not verify authentication: %w", ErrVerification)
 		}
 
-		return "", err
+		return "", fmt.Errorf("could not verify authentication: %v", err)
 	}
 
 	token, err := s.token.Create(idToken, idToken.Subject)
 	if err != nil {
-		if errors.Is(err, jwt.ErrSubjectNotFound) || errors.Is(err, jwt.ErrUnsupportedProvider) {
-			return "", ErrCreation
+		if errors.Is(err, jwt.ErrNotFound) || errors.Is(err, jwt.ErrUnsupportedProvider) {
+			return "", fmt.Errorf("could not create token: %w", ErrCreation)
 		}
 
-		return "", err
+		return "", fmt.Errorf("could not create token: %v", err)
 	}
 
 	return token, nil
@@ -61,13 +61,13 @@ func (s *Service) VerifyAuthentication(ctx context.Context, code string) (string
 func (s *Service) GetMyInformation(token string) ([]byte, error) {
 	sToken := strings.Split(token, " ")
 	if len(sToken) != 2 {
-		return nil, fmt.Errorf("%w: invalid token length", ErrParse)
+		return nil, fmt.Errorf("invalid token length: %w", ErrParse)
 	}
 
 	claims, err := s.token.Claims(sToken[1])
 	if err != nil {
-		if errors.Is(err, jwt.ErrTokenMalformed) || errors.Is(err, jwt.ErrTokenTime) {
-			return nil, ErrCreation
+		if errors.Is(err, jwt.ErrMalformedToken) || errors.Is(err, jwt.ErrExpiredToken) {
+			return nil, fmt.Errorf("could not fetch claims: %v", ErrCreation)
 		}
 
 		return nil, err

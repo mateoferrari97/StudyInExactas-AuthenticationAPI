@@ -24,12 +24,12 @@ func run() error {
 		port         = getPort()
 		signingKey   = getJWTSigningKey()
 		storeKey     = getStoreKey()
-		baseURL      = getBaseURL(env)
+		host         = getHost(env)
 		clientID     = getClientID(env)
 		clientSecret = getClientSecret(env)
 	)
 
-	authenticator, err := auth.NewAuthenticator(baseURL, clientID, clientSecret)
+	authenticator, err := auth.NewAuthenticator(host+port, clientID, clientSecret)
 	if err != nil {
 		return err
 	}
@@ -49,64 +49,64 @@ func run() error {
 }
 
 func getEnv() string {
-	result := os.Getenv("ENVIRONMENT")
-	if result == "" {
-		result = "staging"
+	env := os.Getenv("ENVIRONMENT")
+	if env == "" {
+		env = "staging"
 	}
 
-	return result
+	return env
 }
 
 func getJWTSigningKey() string {
-	result := os.Getenv("JWT_SIGNING_KEY")
-	if result == "" {
-		result = "JWT_SIGNING_KEY"
+	signingKey := os.Getenv("JWT_SIGNING_KEY")
+	if signingKey == "" {
+		signingKey = "JWT_SIGNING_KEY"
 	}
 
-	return result
+	return signingKey
 }
 
 func getPort() string {
-	result := os.Getenv("PORT")
-	if result == "" {
-		result = ":8080"
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = ":8080"
 	}
 
-	return result
+	return port
 }
 
 func getStoreKey() string {
-	result := os.Getenv("STORE_KEY")
-	if result == "" {
-		result = "STORE_KEY"
+	storeKey := os.Getenv("STORE_KEY")
+	if storeKey == "" {
+		storeKey = "STORE_KEY"
 	}
 
-	return result
+	return storeKey
 }
 
-func getBaseURL(env string) string {
-	result := "http://localhost:8080"
+func getHost(env string) string {
+	host := "http://localhost"
 	if env == "production" {
-		result = os.Getenv("BASE_URL")
+		host = os.Getenv("BASE_URL")
 	}
 
-	return result
+	return host
 }
 
 func getClientID(env string) string {
-	result := "qHcV8N1iSntNMbZGxG6wP38sofmEK9aB"
+	clientID := "qHcV8N1iSntNMbZGxG6wP38sofmEK9aB"
 	if env == "production" {
-		result = os.Getenv("AUTH0_CLIENT_ID")
+		clientID = os.Getenv("AUTH0_CLIENT_ID")
 	}
 
-	return result
+	return clientID
 }
 
 func getClientSecret(env string) string {
-	result := "YoEyXYMjjXf82CjoAYzOaNqJwFyDz5162kqBSuSI9kzqAEPwcBkjFM31s_JAZ8JG"
+	clientSecret := "YoEyXYMjjXf82CjoAYzOaNqJwFyDz5162kqBSuSI9kzqAEPwcBkjFM31s_JAZ8JG"
 	if env == "production" {
-		result = os.Getenv("AUTH0_CLIENT_SECRET")
+		clientSecret = os.Getenv("AUTH0_CLIENT_SECRET")
 	}
 
-	return result
+	return clientSecret
 }

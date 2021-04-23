@@ -12,8 +12,7 @@ import (
 )
 
 var (
-	ErrTokenNotFound        = errors.New("auth: token not found")
-	ErrIDTokenNotFound      = errors.New("auth: id token not found")
+	ErrNotFound             = errors.New("auth: resource not found")
 	ErrAuthenticationFailed = errors.New("auth: authentication failed")
 )
 
@@ -53,14 +52,6 @@ type AuthenticationURL struct {
 	url   string
 }
 
-func (au *AuthenticationURL) String() string {
-	return au.url
-}
-
-func (au *AuthenticationURL) State() string {
-	return au.state
-}
-
 func (a *Authenticator) CreateAuthenticationURL() (url, state string, err error) {
 	b := make([]byte, 32)
 	_, err = rand.Read(b)
@@ -75,19 +66,19 @@ func (a *Authenticator) CreateAuthenticationURL() (url, state string, err error)
 func (a *Authenticator) VerifyAuthentication(ctx context.Context, code string) (*oidc.IDToken, error) {
 	token, err := a.config.Exchange(ctx, code)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrTokenNotFound, err)
+		return nil, fmt.Errorf("could not exchange code %w: %v", ErrNotFound, err)
 	}
 
 	rawIDToken, exist := token.Extra("id_token").(string)
 	if !exist {
-		return nil, fmt.Errorf("%w: %v", ErrIDTokenNotFound, err)
+		return nil, fmt.Errorf("could not find id_token %w: %v", ErrNotFound, err)
 	}
 
 	cfg := &oidc.Config{ClientID: a.clientID}
 
 	idToken, err := a.provider.Verifier(cfg).Verify(ctx, rawIDToken)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrAuthenticationFailed, err)
+		return nil, fmt.Errorf("could not verify token %w: %v", ErrAuthenticationFailed, err)
 	}
 
 	return idToken, nil
