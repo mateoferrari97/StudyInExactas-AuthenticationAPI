@@ -52,7 +52,7 @@ type AuthenticationURL struct {
 	url   string
 }
 
-func (a *Authenticator) CreateAuthenticationURL() (url, state string, err error) {
+func (a *Authenticator) CreateAuthentication() (url, state string, err error) {
 	b := make([]byte, 32)
 	_, err = rand.Read(b)
 	if err != nil {
