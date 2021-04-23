@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"github.com/gorilla/sessions"
 	"github.com/mateoferrari97/Kit/web/server"
@@ -36,7 +37,8 @@ func (s *serviceMock) VerifyAuthentication(ctx context.Context, code string) (st
 }
 
 func (s *serviceMock) GetMyInformation(token string) ([]byte, error) {
-	panic("implement me")
+	args := s.Called(token)
+	return args.Get(0).([]byte), args.Error(1)
 }
 
 type storageMock struct {
@@ -408,4 +410,134 @@ func TestHandler_LoginCallback_VerifyAuthenticationError(t *testing.T) {
 			require.EqualError(t, err, tc.expectedError)
 		})
 	}
+}
+
+func TestHandler_Logout(t *testing.T) {
+	// Given
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("GET", "whocares", nil)
+	r.AddCookie(&http.Cookie{Name: "token", Value: "_token_"})
+
+	wrapper := wrapperMock{}
+	service_ := serviceMock{}
+	storage := storageMock{}
+
+	h := NewHandler(&wrapper, &service_, &storage)
+	h.Logout()
+
+	// When
+	err := wrapper.f(w, r)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Then
+	require.Equal(t, http.StatusOK, w.Code)
+
+	cookies := w.Header().Values("Set-Cookie")
+	require.Len(t, cookies, 1)
+	require.Equal(t, "token=_token_; Max-Age=0", cookies[0])
+}
+
+func TestHandler_Logout_TokenCookieNotFound(t *testing.T) {
+	// Given
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("GET", "whocares", nil)
+
+	wrapper := wrapperMock{}
+	service_ := serviceMock{}
+	storage := storageMock{}
+
+	h := NewHandler(&wrapper, &service_, &storage)
+	h.Logout()
+
+	// When
+	err := wrapper.f(w, r)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Then
+	require.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestHandler_Me(t *testing.T) {
+	// Given
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("GET", "whocares", nil)
+	r.Header.Add("Authorization", "Bearer _token_")
+
+	wrapper := wrapperMock{}
+	storage := storageMock{}
+	service_ := serviceMock{}
+	service_.On("GetMyInformation", "Bearer _token_").Return([]byte(`{"name":"example"}`), nil)
+
+	h := NewHandler(&wrapper, &service_, &storage)
+	h.Me()
+
+	// When
+	err := wrapper.f(w, r)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Then
+	var body struct {
+		Name string `json:"name"`
+	}
+
+	if err := json.NewDecoder(w.Body).Decode(&body); err != nil {
+		t.Fatal(err)
+	}
+
+	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, "example", body.Name)
+}
+
+func TestHandler_Me_GetMyInformationParsingTokenError(t *testing.T) {
+	// Given
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("GET", "whocares", nil)
+	r.Header.Add("Authorization", "Bearer _token_")
+
+	wrapper := wrapperMock{}
+	storage := storageMock{}
+	service_ := serviceMock{}
+	service_.On("GetMyInformation", "Bearer _token_").Return([]byte{}, _service.ErrParse)
+
+	h := NewHandler(&wrapper, &service_, &storage)
+	h.Me()
+
+	// When
+	err := wrapper.f(w, r)
+	if err == nil {
+		t.Fatal("test must fail")
+	}
+
+	// Then
+	require.EqualError(t, err, "403 forbidden: service: could not parse resource")
+}
+
+func TestHandler_Me_GetMyInformationError(t *testing.T) {
+	// Given
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("GET", "whocares", nil)
+	r.Header.Add("Authorization", "Bearer _token_")
+
+	wrapper := wrapperMock{}
+	storage := storageMock{}
+	service_ := serviceMock{}
+	service_.On("GetMyInformation", "Bearer _token_").Return([]byte{}, errors.New("error"))
+
+	h := NewHandler(&wrapper, &service_, &storage)
+	h.Me()
+
+	// When
+	err := wrapper.f(w, r)
+	if err == nil {
+		t.Fatal("test must fail")
+	}
+
+	// Then
+	require.EqualError(t, err, "error")
 }
