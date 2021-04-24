@@ -1,14 +1,13 @@
-package app
+package internal
 
 import (
 	"context"
 	"errors"
+	"github.com/mateoferrari97/Users-API/cmd/server/internal/service"
 	"net/http"
 
-	"github.com/mateoferrari97/Kit/web/server"
-	_service "github.com/mateoferrari97/Users-API/cmd/app/service"
-
 	"github.com/gorilla/sessions"
+	"github.com/mateoferrari97/Kit/web/server"
 )
 
 type Wrapper interface {
@@ -87,9 +86,9 @@ func (h *Handler) LoginCallback(mws ...server.Middleware) {
 		token, err := h.service.VerifyAuthentication(r.Context(), r.URL.Query().Get("code"))
 		if err != nil {
 			switch err {
-			case _service.ErrNotFound:
+			case service.ErrNotFound:
 				return server.NewError(err.Error(), http.StatusNotFound)
-			case _service.ErrVerification:
+			case service.ErrVerification:
 				return server.NewError(err.Error(), http.StatusForbidden)
 			}
 
@@ -136,7 +135,7 @@ func (h *Handler) Me(mws ...server.Middleware) {
 
 		myInformation, err := h.service.GetMyInformation(token)
 		if err != nil {
-			if errors.Is(err, _service.ErrParse) {
+			if errors.Is(err, service.ErrParse) {
 				return server.NewError(err.Error(), http.StatusForbidden)
 			}
 

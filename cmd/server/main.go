@@ -1,15 +1,14 @@
 package main
 
 import (
-	"github.com/mateoferrari97/Users-API/cmd/app/service/auth"
+	"github.com/mateoferrari97/Users-API/cmd/server/internal"
+	service2 "github.com/mateoferrari97/Users-API/cmd/server/internal/service"
+	auth2 "github.com/mateoferrari97/Users-API/cmd/server/internal/service/auth"
+	jwt2 "github.com/mateoferrari97/Users-API/cmd/server/internal/service/jwt"
 	"os"
 
-	"github.com/mateoferrari97/Kit/web/server"
-	"github.com/mateoferrari97/Users-API/cmd/app"
-	"github.com/mateoferrari97/Users-API/cmd/app/service"
-	"github.com/mateoferrari97/Users-API/cmd/app/service/jwt"
-
 	"github.com/gorilla/sessions"
+	"github.com/mateoferrari97/Kit/web/server"
 )
 
 func main() {
@@ -29,17 +28,17 @@ func run() error {
 		clientSecret = getClientSecret(env)
 	)
 
-	authenticator, err := auth.NewAuthenticator(host+port, clientID, clientSecret)
+	authenticator, err := auth2.NewAuthenticator(host+port, clientID, clientSecret)
 	if err != nil {
 		return err
 	}
 
 	sv := server.NewServer()
-	token := jwt.NewJWT(signingKey)
-	service_ := service.NewService(authenticator, token)
+	token := jwt2.NewJWT(signingKey)
+	service_ := service2.NewService(authenticator, token)
 	storage := sessions.NewCookieStore([]byte(storeKey))
 
-	handler := app.NewHandler(sv, service_, storage)
+	handler := internal.NewHandler(sv, service_, storage)
 	handler.Login()
 	handler.LoginCallback()
 	handler.Logout() // server.ValidateJWT(signingKey)

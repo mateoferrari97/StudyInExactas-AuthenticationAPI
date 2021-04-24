@@ -1,4 +1,4 @@
-package app
+package internal
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"errors"
 	"github.com/gorilla/sessions"
 	"github.com/mateoferrari97/Kit/web/server"
-	_service "github.com/mateoferrari97/Users-API/cmd/app/service"
+	"github.com/mateoferrari97/Users-API/cmd/server/internal/service"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -360,12 +360,12 @@ func TestHandler_LoginCallback_VerifyAuthenticationError(t *testing.T) {
 		},
 		{
 			name:          "not found error",
-			returnedError: _service.ErrNotFound,
+			returnedError: service.ErrNotFound,
 			expectedError: "404 not_found: service: resource not found",
 		},
 		{
 			name:          "verification error",
-			returnedError: _service.ErrVerification,
+			returnedError: service.ErrVerification,
 			expectedError: "403 forbidden: service: could not verify resource",
 		},
 	}
@@ -503,7 +503,7 @@ func TestHandler_Me_GetMyInformationParsingTokenError(t *testing.T) {
 	wrapper := wrapperMock{}
 	storage := storageMock{}
 	service_ := serviceMock{}
-	service_.On("GetMyInformation", "Bearer _token_").Return([]byte{}, _service.ErrParse)
+	service_.On("GetMyInformation", "Bearer _token_").Return([]byte{}, service.ErrParse)
 
 	h := NewHandler(&wrapper, &service_, &storage)
 	h.Me()
