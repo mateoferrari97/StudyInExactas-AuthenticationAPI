@@ -42,8 +42,8 @@ func run() error {
 	handler := app.NewHandler(sv, service_, storage)
 	handler.Login()
 	handler.LoginCallback()
-	handler.Logout()
-	handler.Me() // server.ValidateJWT(signingKey)
+	handler.Logout() // server.ValidateJWT(signingKey)
+	handler.Me()     // server.ValidateJWT(signingKey)
 
 	return sv.Run(port)
 }
