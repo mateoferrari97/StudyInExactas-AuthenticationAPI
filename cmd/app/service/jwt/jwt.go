@@ -15,6 +15,10 @@ var (
 	ErrExpiredToken        = errors.New("jwt: token has expired or is not valid yet")
 )
 
+type UnmarshalClaims interface {
+	Claims(v interface{}) error
+}
+
 type JWT struct {
 	signingKey    string
 	signingMethod jwt.SigningMethod
@@ -27,8 +31,32 @@ func NewJWT(signingKey string) *JWT {
 	}
 }
 
-type UnmarshalClaims interface {
-	Claims(v interface{}) error
+func (t *JWT) Create(v UnmarshalClaims, subject string) (string, error) {
+	if subject == "" {
+		return "", ErrNotFound
+	}
+
+	if !strings.Contains(subject, "google-oauth2") && !strings.Contains(subject, "windowslive") {
+		return "", fmt.Errorf("%w: got: (%s), want: (google-oauth2 and windowslive)", ErrUnsupportedProvider, subject)
+	}
+
+	return t.create(v)
+}
+
+func (t *JWT) create(v UnmarshalClaims) (string, error) {
+	customClaims, err := extractClaims(v)
+	if err != nil {
+		return "", err
+	}
+
+	token := jwt.NewWithClaims(t.signingMethod, customClaims)
+
+	signedToken, err := token.SignedString([]byte(t.signingKey))
+	if err != nil {
+		return "", fmt.Errorf("could not sign token: %v", err)
+	}
+
+	return signedToken, nil
 }
 
 type Claims interface {
@@ -46,35 +74,7 @@ type MetaData struct {
 	AvatarURL string `json:"avatar_url"`
 }
 
-func (t *JWT) Create(v UnmarshalClaims, subject string) (string, error) {
-	if subject == "" {
-		return "", ErrNotFound
-	}
-
-	if !strings.Contains(subject, "google-oauth2") && !strings.Contains(subject, "windowslive") {
-		return "", fmt.Errorf("%w: got: (%s), want: (google-oauth2 and windowslive)", ErrUnsupportedProvider, subject)
-	}
-
-	return t.create(v, subject)
-}
-
-func (t *JWT) create(v UnmarshalClaims, subject string) (string, error) {
-	customClaims, err := extractClaims(v, subject)
-	if err != nil {
-		return "", err
-	}
-
-	token := jwt.NewWithClaims(t.signingMethod, customClaims)
-
-	signedToken, err := token.SignedString([]byte(t.signingKey))
-	if err != nil {
-		return "", fmt.Errorf("could not sign token: %v", err)
-	}
-
-	return signedToken, nil
-}
-
-func extractClaims(v UnmarshalClaims, subject string) (CClaims, error) {
+func extractClaims(v UnmarshalClaims) (CClaims, error) {
 	var claims struct {
 		Aud     string `json:"aud"`
 		Exp     int64  `json:"exp"`

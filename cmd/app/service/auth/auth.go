@@ -47,11 +47,6 @@ func NewAuthenticator(baseURL string, clientID string, clientSecret string) (*Au
 	}, nil
 }
 
-type AuthenticationURL struct {
-	state string
-	url   string
-}
-
 func (a *Authenticator) CreateAuthentication() (url, state string, err error) {
 	b := make([]byte, 32)
 	_, err = rand.Read(b)
