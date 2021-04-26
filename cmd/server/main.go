@@ -1,14 +1,15 @@
 package main
 
 import (
+	"os"
+
+	"github.com/mateoferrari97/Kit/web/server"
 	"github.com/mateoferrari97/Users-API/cmd/server/internal"
 	"github.com/mateoferrari97/Users-API/cmd/server/internal/service"
 	"github.com/mateoferrari97/Users-API/cmd/server/internal/service/auth"
 	"github.com/mateoferrari97/Users-API/cmd/server/internal/service/jwt"
-	"os"
 
 	"github.com/gorilla/sessions"
-	"github.com/mateoferrari97/Kit/web/server"
 )
 
 func main() {
@@ -71,7 +72,7 @@ func getPort() string {
 		port = ":8080"
 	}
 
-	return port
+	return ":" + port
 }
 
 func getStoreKey() string {
