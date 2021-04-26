@@ -111,17 +111,12 @@ func (t *JWT) Claims(signedToken string) (Claims, error) {
 	if err != nil {
 		var hErr *jwt.ValidationError
 		if errors.As(err, &hErr) {
-			switch hErr.Errors {
-			case jwt.ValidationErrorMalformed:
-				return nil, ErrMalformedToken
-			case jwt.ValidationErrorExpired, jwt.ValidationErrorNotValidYet:
+			if hErr.Errors == jwt.ValidationErrorExpired || hErr.Errors == jwt.ValidationErrorNotValidYet {
 				return nil, ErrExpiredToken
-			default:
-				return nil, hErr
 			}
 		}
 
-		return nil, fmt.Errorf("could not handle jwt: %v", err)
+		return nil, fmt.Errorf("could not handle jwt: %w: %v", ErrMalformedToken, err)
 	}
 
 	return token.Claims, nil
