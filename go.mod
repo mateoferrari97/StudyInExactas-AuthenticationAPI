@@ -1,8 +1,8 @@
-// +heroku goVersion go1.14
+// +heroku goVersion go1.16.0
 
 module github.com/mateoferrari97/Users-API
 
-go 1.14
+go 1.16
 
 require (
 	github.com/coreos/go-oidc/v3 v3.0.0
