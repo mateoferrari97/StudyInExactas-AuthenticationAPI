@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/mateoferrari97/Users-API/cmd/server/internal"
-	service2 "github.com/mateoferrari97/Users-API/cmd/server/internal/service"
-	auth2 "github.com/mateoferrari97/Users-API/cmd/server/internal/service/auth"
-	jwt2 "github.com/mateoferrari97/Users-API/cmd/server/internal/service/jwt"
+	"github.com/mateoferrari97/Users-API/cmd/server/internal/service"
+	"github.com/mateoferrari97/Users-API/cmd/server/internal/service/auth"
+	"github.com/mateoferrari97/Users-API/cmd/server/internal/service/jwt"
 	"os"
 
 	"github.com/gorilla/sessions"
@@ -28,14 +28,14 @@ func run() error {
 		clientSecret = getClientSecret(env)
 	)
 
-	authenticator, err := auth2.NewAuthenticator(host+port, clientID, clientSecret)
+	authenticator, err := auth.NewAuthenticator(host+port, clientID, clientSecret)
 	if err != nil {
 		return err
 	}
 
 	sv := server.NewServer()
-	token := jwt2.NewJWT(signingKey)
-	service_ := service2.NewService(authenticator, token)
+	token := jwt.NewJWT(signingKey)
+	service_ := service.NewService(authenticator, token)
 	storage := sessions.NewCookieStore([]byte(storeKey))
 
 	handler := internal.NewHandler(sv, service_, storage)
