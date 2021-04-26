@@ -1,6 +1,4 @@
-// +heroku goVersion go1.16.0
-
-module github.com/mateoferrari97/Users-API
+module github.com/mateoferrari97/AnitiMonono-AuthenticationAPI
 
 go 1.16
 
