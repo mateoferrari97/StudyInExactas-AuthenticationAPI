@@ -29,7 +29,7 @@ func run() error {
 		clientSecret = getClientSecret(env)
 	)
 
-	authenticator, err := auth.NewAuthenticator(host+port, clientID, clientSecret)
+	authenticator, err := auth.NewAuthenticator(host, clientID, clientSecret)
 	if err != nil {
 		return err
 	}
@@ -75,6 +75,15 @@ func getPort() string {
 	return ":" + port
 }
 
+func getHost(env string) string {
+	host := "http://localhost:8080"
+	if env == "production" {
+		host = os.Getenv("BASE_URL")
+	}
+
+	return host
+}
+
 func getStoreKey() string {
 	storeKey := os.Getenv("STORE_KEY")
 	if storeKey == "" {
@@ -82,15 +91,6 @@ func getStoreKey() string {
 	}
 
 	return storeKey
-}
-
-func getHost(env string) string {
-	host := "http://localhost"
-	if env == "production" {
-		host = os.Getenv("BASE_URL")
-	}
-
-	return host
 }
 
 func getClientID(env string) string {
