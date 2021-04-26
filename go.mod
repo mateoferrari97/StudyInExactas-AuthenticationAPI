@@ -1,4 +1,5 @@
 // +heroku goVersion go1.16
+// +heroku install ./cmd/...
 
 module github.com/mateoferrari97/AnitiMonono-AuthenticationAPI
 
