@@ -3,11 +3,12 @@ package internal
 import (
 	"context"
 	"errors"
-	"github.com/mateoferrari97/Users-API/cmd/server/internal/service"
 	"net/http"
 
-	"github.com/gorilla/sessions"
+	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/service"
 	"github.com/mateoferrari97/Kit/web/server"
+
+	"github.com/gorilla/sessions"
 )
 
 type Wrapper interface {

@@ -3,11 +3,11 @@ package main
 import (
 	"os"
 
+	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal"
+	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/service"
+	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/service/auth"
+	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/service/jwt"
 	"github.com/mateoferrari97/Kit/web/server"
-	"github.com/mateoferrari97/Users-API/cmd/server/internal"
-	"github.com/mateoferrari97/Users-API/cmd/server/internal/service"
-	"github.com/mateoferrari97/Users-API/cmd/server/internal/service/auth"
-	"github.com/mateoferrari97/Users-API/cmd/server/internal/service/jwt"
 
 	"github.com/gorilla/sessions"
 )

@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/coreos/go-oidc/v3/oidc"
-	auth2 "github.com/mateoferrari97/Users-API/cmd/server/internal/service/auth"
-	jwt2 "github.com/mateoferrari97/Users-API/cmd/server/internal/service/jwt"
 	"strings"
+
+	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/service/auth"
+	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/service/jwt"
+
+	"github.com/coreos/go-oidc/v3/oidc"
 )
 
 var (
@@ -24,8 +26,8 @@ type Authenticator interface {
 }
 
 type JWT interface {
-	Create(v jwt2.UnmarshalClaims, subject string) (string, error)
-	Claims(signedToken string) (jwt2.Claims, error)
+	Create(v jwt.UnmarshalClaims, subject string) (string, error)
+	Claims(signedToken string) (jwt.Claims, error)
 }
 
 type Service struct {
@@ -36,7 +38,7 @@ type Service struct {
 func NewService(authenticator Authenticator, jwt JWT) *Service {
 	return &Service{
 		authenticator: authenticator,
-		jwt:         jwt,
+		jwt:           jwt,
 	}
 }
 
@@ -48,9 +50,9 @@ func (s *Service) VerifyAuthentication(ctx context.Context, code string) (string
 	idToken, err := s.authenticator.VerifyAuthentication(ctx, code)
 	if err != nil {
 		switch err {
-		case auth2.ErrNotFound:
+		case auth.ErrNotFound:
 			return "", fmt.Errorf("could not verify authentication: %w", ErrNotFound)
-		case auth2.ErrAuthenticationFailed:
+		case auth.ErrAuthenticationFailed:
 			return "", fmt.Errorf("could not verify authentication: %w", ErrVerification)
 		}
 
@@ -59,7 +61,7 @@ func (s *Service) VerifyAuthentication(ctx context.Context, code string) (string
 
 	token, err := s.jwt.Create(idToken, idToken.Subject)
 	if err != nil {
-		if errors.Is(err, jwt2.ErrNotFound) || errors.Is(err, jwt2.ErrUnsupportedProvider) {
+		if errors.Is(err, jwt.ErrNotFound) || errors.Is(err, jwt.ErrUnsupportedProvider) {
 			return "", fmt.Errorf("could not create token: %w", ErrCreation)
 		}
 
@@ -77,7 +79,7 @@ func (s *Service) GetMyInformation(token string) ([]byte, error) {
 
 	claims, err := s.jwt.Claims(sToken[1])
 	if err != nil {
-		if errors.Is(err, jwt2.ErrMalformedToken) || errors.Is(err, jwt2.ErrExpiredToken) {
+		if errors.Is(err, jwt.ErrMalformedToken) || errors.Is(err, jwt.ErrExpiredToken) {
 			return nil, fmt.Errorf("could not fetch claims: %v", ErrCreation)
 		}
 

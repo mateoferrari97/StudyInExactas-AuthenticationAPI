@@ -2,9 +2,10 @@ package jwt
 
 import (
 	"encoding/json"
+	"testing"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 type claims struct {

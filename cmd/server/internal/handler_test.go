@@ -4,14 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/gorilla/sessions"
-	"github.com/mateoferrari97/Kit/web/server"
-	"github.com/mateoferrari97/Users-API/cmd/server/internal/service"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/service"
+
+	"github.com/gorilla/sessions"
+	"github.com/mateoferrari97/Kit/web/server"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 type wrapperMock struct {

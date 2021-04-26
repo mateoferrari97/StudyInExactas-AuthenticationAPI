@@ -3,13 +3,14 @@ package service
 import (
 	"context"
 	"errors"
-	auth2 "github.com/mateoferrari97/Users-API/cmd/server/internal/service/auth"
-	jwt2 "github.com/mateoferrari97/Users-API/cmd/server/internal/service/jwt"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/service/auth"
+	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/service/jwt"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 type authenticatorMock struct {
@@ -30,14 +31,14 @@ type jwtMock struct {
 	mock.Mock
 }
 
-func (j *jwtMock) Create(v jwt2.UnmarshalClaims, subject string) (string, error) {
+func (j *jwtMock) Create(v jwt.UnmarshalClaims, subject string) (string, error) {
 	args := j.Called(v, subject)
 	return args.String(0), args.Error(1)
 }
 
-func (j *jwtMock) Claims(signedToken string) (jwt2.Claims, error) {
+func (j *jwtMock) Claims(signedToken string) (jwt.Claims, error) {
 	args := j.Called(signedToken)
-	return args.Get(0).(jwt2.Claims), args.Error(1)
+	return args.Get(0).(jwt.Claims), args.Error(1)
 }
 
 func TestService_CreateAuthentication(t *testing.T) {
@@ -114,12 +115,12 @@ func TestService_VerifyAuthentication_VerifyAuthenticationErrors(t *testing.T) {
 		},
 		{
 			name:          "not found error",
-			returnedError: auth2.ErrNotFound,
+			returnedError: auth.ErrNotFound,
 			expectedError: "could not verify authentication: service: resource not found",
 		},
 		{
 			name:          "authentication error",
-			returnedError: auth2.ErrAuthenticationFailed,
+			returnedError: auth.ErrAuthenticationFailed,
 			expectedError: "could not verify authentication: service: could not verify resource",
 		},
 	}
@@ -161,12 +162,12 @@ func TestService_VerifyAuthentication_JWTCreateTokenErrors(t *testing.T) {
 		},
 		{
 			name:          "not found error",
-			returnedError: jwt2.ErrNotFound,
+			returnedError: jwt.ErrNotFound,
 			expectedError: "could not create token: service: could not create resource",
 		},
 		{
 			name:          "unsupported provider error",
-			returnedError: jwt2.ErrUnsupportedProvider,
+			returnedError: jwt.ErrUnsupportedProvider,
 			expectedError: "could not create token: service: could not create resource",
 		},
 	}
@@ -254,12 +255,12 @@ func TestService_GetMyInformation_GetClaimsError(t *testing.T) {
 		},
 		{
 			name:          "malformed token error",
-			returnedError: jwt2.ErrMalformedToken,
+			returnedError: jwt.ErrMalformedToken,
 			expectedError: "could not fetch claims: service: could not create resource",
 		},
 		{
 			name:          "expired token error",
-			returnedError: jwt2.ErrExpiredToken,
+			returnedError: jwt.ErrExpiredToken,
 			expectedError: "could not fetch claims: service: could not create resource",
 		},
 	}
