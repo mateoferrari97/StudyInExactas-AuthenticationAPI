@@ -4,9 +4,9 @@ import (
 	"os"
 
 	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal"
-	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/service"
-	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/service/auth"
-	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/service/jwt"
+	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/authentication"
+	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/authentication/auth"
+	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/authentication/jwt"
 	"github.com/mateoferrari97/Kit/web/server"
 
 	"github.com/gorilla/sessions"
@@ -36,7 +36,7 @@ func run() error {
 
 	sv := server.NewServer()
 	token := jwt.NewJWT(signingKey)
-	service_ := service.NewService(authenticator, token)
+	service_ := authentication.NewService(authenticator, token)
 	storage := sessions.NewCookieStore([]byte(storeKey))
 
 	handler := internal.NewHandler(sv, service_, storage)

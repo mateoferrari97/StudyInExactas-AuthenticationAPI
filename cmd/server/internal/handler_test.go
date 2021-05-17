@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/service"
+	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/authentication"
 
 	"github.com/gorilla/sessions"
 	"github.com/mateoferrari97/Kit/web/server"
@@ -362,13 +362,13 @@ func TestHandler_LoginCallback_VerifyAuthenticationError(t *testing.T) {
 		},
 		{
 			name:          "not found error",
-			returnedError: service.ErrNotFound,
-			expectedError: "404 not_found: service: resource not found",
+			returnedError: authentication.ErrNotFound,
+			expectedError: "404 not_found: authentication: resource not found",
 		},
 		{
 			name:          "verification error",
-			returnedError: service.ErrVerification,
-			expectedError: "403 forbidden: service: could not verify resource",
+			returnedError: authentication.ErrVerification,
+			expectedError: "403 forbidden: authentication: could not verify resource",
 		},
 	}
 
@@ -505,7 +505,7 @@ func TestHandler_Me_GetMyInformationParsingTokenError(t *testing.T) {
 	wrapper := wrapperMock{}
 	storage := storageMock{}
 	service_ := serviceMock{}
-	service_.On("GetMyInformation", "Bearer _token_").Return([]byte{}, service.ErrParse)
+	service_.On("GetMyInformation", "Bearer _token_").Return([]byte{}, authentication.ErrParse)
 
 	h := NewHandler(&wrapper, &service_, &storage)
 	h.Me()
@@ -517,7 +517,7 @@ func TestHandler_Me_GetMyInformationParsingTokenError(t *testing.T) {
 	}
 
 	// Then
-	require.EqualError(t, err, "403 forbidden: service: could not parse resource")
+	require.EqualError(t, err, "403 forbidden: authentication: could not parse resource")
 }
 
 func TestHandler_Me_GetMyInformationError(t *testing.T) {

@@ -1,4 +1,4 @@
-package service
+package authentication
 
 import (
 	"context"
@@ -7,17 +7,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/service/auth"
-	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/service/jwt"
+	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/authentication/auth"
+	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/authentication/jwt"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 )
 
 var (
-	ErrNotFound     = errors.New("service: resource not found")
-	ErrVerification = errors.New("service: could not verify resource")
-	ErrCreation     = errors.New("service: could not create resource")
-	ErrParse        = errors.New("service: could not parse resource")
+	ErrNotFound     = errors.New("authentication: resource not found")
+	ErrVerification = errors.New("authentication: could not verify resource")
+	ErrCreation     = errors.New("authentication: could not create resource")
+	ErrParse        = errors.New("authentication: could not parse resource")
 )
 
 type Authenticator interface {

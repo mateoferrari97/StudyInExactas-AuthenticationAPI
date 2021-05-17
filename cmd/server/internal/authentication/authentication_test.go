@@ -1,12 +1,12 @@
-package service
+package authentication
 
 import (
 	"context"
 	"errors"
 	"testing"
 
-	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/service/auth"
-	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/service/jwt"
+	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/authentication/auth"
+	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/authentication/jwt"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/stretchr/testify/mock"
@@ -116,12 +116,12 @@ func TestService_VerifyAuthentication_VerifyAuthenticationErrors(t *testing.T) {
 		{
 			name:          "not found error",
 			returnedError: auth.ErrNotFound,
-			expectedError: "could not verify authentication: service: resource not found",
+			expectedError: "could not verify authentication: authentication: resource not found",
 		},
 		{
 			name:          "authentication error",
 			returnedError: auth.ErrAuthenticationFailed,
-			expectedError: "could not verify authentication: service: could not verify resource",
+			expectedError: "could not verify authentication: authentication: could not verify resource",
 		},
 	}
 
@@ -163,12 +163,12 @@ func TestService_VerifyAuthentication_JWTCreateTokenErrors(t *testing.T) {
 		{
 			name:          "not found error",
 			returnedError: jwt.ErrNotFound,
-			expectedError: "could not create token: service: could not create resource",
+			expectedError: "could not create token: authentication: could not create resource",
 		},
 		{
 			name:          "unsupported provider error",
 			returnedError: jwt.ErrUnsupportedProvider,
-			expectedError: "could not create token: service: could not create resource",
+			expectedError: "could not create token: authentication: could not create resource",
 		},
 	}
 
@@ -239,7 +239,7 @@ func TestService_GetMyInformation_InvalidTokenLengthError(t *testing.T) {
 	}
 
 	// Then
-	require.EqualError(t, err, "invalid token length: service: could not parse resource")
+	require.EqualError(t, err, "invalid token length: authentication: could not parse resource")
 }
 
 func TestService_GetMyInformation_GetClaimsError(t *testing.T) {
@@ -256,12 +256,12 @@ func TestService_GetMyInformation_GetClaimsError(t *testing.T) {
 		{
 			name:          "malformed token error",
 			returnedError: jwt.ErrMalformedToken,
-			expectedError: "could not fetch claims: service: could not create resource",
+			expectedError: "could not fetch claims: authentication: could not create resource",
 		},
 		{
 			name:          "expired token error",
 			returnedError: jwt.ErrExpiredToken,
-			expectedError: "could not fetch claims: service: could not create resource",
+			expectedError: "could not fetch claims: authentication: could not create resource",
 		},
 	}
 

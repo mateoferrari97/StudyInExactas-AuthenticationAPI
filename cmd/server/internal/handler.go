@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/service"
+	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/authentication"
 	"github.com/mateoferrari97/Kit/web/server"
 
 	"github.com/gorilla/sessions"
@@ -87,9 +87,9 @@ func (h *Handler) LoginCallback(mws ...server.Middleware) {
 		token, err := h.service.VerifyAuthentication(r.Context(), r.URL.Query().Get("code"))
 		if err != nil {
 			switch err {
-			case service.ErrNotFound:
+			case authentication.ErrNotFound:
 				return server.NewError(err.Error(), http.StatusNotFound)
-			case service.ErrVerification:
+			case authentication.ErrVerification:
 				return server.NewError(err.Error(), http.StatusForbidden)
 			}
 
@@ -136,7 +136,7 @@ func (h *Handler) Me(mws ...server.Middleware) {
 
 		myInformation, err := h.service.GetMyInformation(token)
 		if err != nil {
-			if errors.Is(err, service.ErrParse) {
+			if errors.Is(err, authentication.ErrParse) {
 				return server.NewError(err.Error(), http.StatusForbidden)
 			}
 
