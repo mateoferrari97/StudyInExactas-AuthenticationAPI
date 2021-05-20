@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	"github.com/mateoferrari97/AnitiMonono-AuthenticationAPI/cmd/server/internal/authentication"
+	"github.com/mateoferrari97/Kit/web/server"
 
 	"github.com/gorilla/sessions"
-	"github.com/mateoferrari97/Kit/web/server"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -194,7 +194,7 @@ func TestHandler_LoginCallback(t *testing.T) {
 	r.URL.RawQuery = q.Encode()
 
 	ctx := context.Background()
-	r.WithContext(ctx)
+	r = r.WithContext(ctx)
 
 	store.On("Save", r, w, session).Return(nil)
 
@@ -290,7 +290,7 @@ func TestHandler_LoginCallback_SessionSaveError(t *testing.T) {
 	r.URL.RawQuery = q.Encode()
 
 	ctx := context.Background()
-	r.WithContext(ctx)
+	r = r.WithContext(ctx)
 
 	store.On("Save", r, w, session).Return(errors.New("error"))
 
@@ -327,7 +327,7 @@ func TestHandler_LoginCallback_CodeIsMissing(t *testing.T) {
 	r.URL.RawQuery = q.Encode()
 
 	ctx := context.Background()
-	r.WithContext(ctx)
+	r = r.WithContext(ctx)
 
 	store.On("Save", r, w, session).Return(nil)
 
@@ -388,7 +388,7 @@ func TestHandler_LoginCallback_VerifyAuthenticationError(t *testing.T) {
 			r.URL.RawQuery = q.Encode()
 
 			ctx := context.Background()
-			r.WithContext(ctx)
+			r = r.WithContext(ctx)
 
 			store.On("Save", r, w, session).Return(nil)
 
