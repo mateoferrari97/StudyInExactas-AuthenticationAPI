@@ -63,7 +63,7 @@ func TestJWT_Create_SubjectsError(t *testing.T) {
 	jwt_ := NewJWT("signingKey")
 
 	// When
-	_, err := jwt_.Create(&claims,"random subject")
+	_, err := jwt_.Create(&claims, "random subject")
 	if err == nil {
 		t.Fatal("test must fail")
 	}
